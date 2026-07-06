@@ -1,27 +1,21 @@
-
-/*
-    Welcome to your first dbt model!
-    Did you know that you can also configure models directly within SQL files?
-    This will override configurations stated in dbt_project.yml
-
-    Try changing "table" to "view" below
-*/
-
 {{ config(materialized='table') }}
 
-with source_data as (
-
-    select 1 as id
-    union all
-    select null as id
-
+with cte as(
+    SELECT
+        f.amount,
+        f.booking_date,
+        d.airport_id,
+        d.airport_name,
+        d.city,
+        d.country
+    FROM
+        flights_catalog.gold.fact_bookings f
+    LEFT JOIN
+        flights_catalog.gold.dim_airports d
+    ON f.DimAirportsKey = d.DimAirportsKey
 )
 
-select *
-from source_data
-
-/*
-    Uncomment the line below to remove records with null `id` values
-*/
-
--- where id is not null
+SELECT airport_id, airport_name , round(sum(amount),2) as total_amount
+FROM cte
+GROUP BY 1,2
+ORDER BY total_amount DESC
